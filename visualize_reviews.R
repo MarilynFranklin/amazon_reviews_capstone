@@ -5,6 +5,7 @@ library(dplyr)
 library(data.table)
 library(tm)
 library(qdap)
+library(wordcloud)
 
 qdap_clean <- function(x) {
   x <- replace_abbreviation(x)
@@ -64,3 +65,31 @@ rect.hclust(unhelpful_fit, k=5, border="red")
 plot(helpful_fit)
 groups <- cutree(helpful_fit, k=5)
 rect.hclust(helpful_fit, k=5, border="red")
+
+# Remove words
+my_stopwords <- c(stopwords('english'), 'amazon', 'like', 'coffee', 'taste')
+helpful.corpus <- tm_map(helpful.corpus, removeWords, my_stopwords)
+unhelpful.corpus <- tm_map(unhelpful.corpus, removeWords, my_stopwords)
+
+# Create TDM
+helpful.dtm <- TermDocumentMatrix(helpful.corpus)
+unhelpful.dtm <- TermDocumentMatrix(unhelpful.corpus)
+
+# Create matrix
+helpful_matrix   <- as.matrix(helpful.dtm)
+unhelpful_matrix <- as.matrix(unhelpful.dtm)
+
+# Calculate frequency
+helpful_frequency   <- rowSums(helpful_matrix)
+unhelpful_frequency <- rowSums(unhelpful_matrix)
+
+# Plot wordcloud
+wordcloud(names(helpful_frequency),
+          helpful_frequency,
+          max.words = 25,
+          color = "blue")
+
+wordcloud(names(unhelpful_frequency),
+          unhelpful_frequency,
+          max.words = 25,
+          color = "blue")

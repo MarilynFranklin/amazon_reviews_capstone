@@ -71,7 +71,11 @@ with_sentences <- lapply(reviews$Text, get_sentences)
 with_sentences <- lapply(reviews$Text, get_sentences)
 with_sentiment <- lapply(with_sentences, get_sentiment, method="syuzhet")
 sum_sentiment <- lapply(with_sentiment, function(x) sum(x))
+mean_sentiment <- lapply(with_sentiment, function(x) mean(x))
+median_sentiment <- lapply(with_sentiment, function(x) median(x))
 reviews$sentiment_score <- unlist(sum_sentiment)
+reviews$sentiment_mean <- unlist(mean_sentiment)
+reviews$sentiment_median <- unlist(median_sentiment)
 
 # Calculate NRC sentiment
 with_sentences <- lapply(reviews$Text, get_sentences)

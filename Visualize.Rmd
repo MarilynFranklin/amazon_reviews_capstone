@@ -12,6 +12,7 @@ library(data.table)
 library(tm)
 library(qdap)
 library(wordcloud)
+library(ggdendro)
 
 qdap_clean <- function(x) {
   x <- replace_abbreviation(x)
@@ -68,13 +69,11 @@ unhelpful_fit <- hclust(unhelpful_d, method="ward.D")
 ```
 
 ```{r echo=FALSE}
-plot(unhelpful_fit)
-groups <- cutree(unhelpful_fit, k=5)
-rect.hclust(unhelpful_fit, k=5, border="red")
+ggdendrogram(helpful_fit, rotate = TRUE) +
+  labs(title = "Helpful Reviews")
 
-plot(helpful_fit)
-groups <- cutree(helpful_fit, k=5)
-rect.hclust(helpful_fit, k=5, border="red")
+ggdendrogram(unhelpful_fit, rotate = TRUE) +
+  labs(title = "Unhelpful Reviews")
 ```
 
 ```{r echo=FALSE, message=FALSE, results="hide"}
@@ -107,13 +106,7 @@ wordcloud(names(helpful_frequency),
 wordcloud(names(unhelpful_frequency),
           unhelpful_frequency,
           max.words = 25,
-          color = "blue")
-
-# Plot Readability
-hist(helpful_reviews$Automated_Readability_Index,
-     main = "Distribution of Helpful Review Readability")
-hist(unhelpful_reviews$Automated_Readability_Index,
-     main = "Distribution of Unhelpful Review Readability")
+        color = "blue")
 ```
 
 ```{r echo=FALSE}

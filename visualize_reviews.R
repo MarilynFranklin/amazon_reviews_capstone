@@ -93,3 +93,4 @@ wordcloud(names(unhelpful_frequency),
           unhelpful_frequency,
           max.words = 25,
           color = "blue")
+

@@ -1,6 +1,6 @@
 ---
 title: "Visualize"
-output: html_document
+output: pdf_document
 ---
 
 ```{r echo=FALSE, message=FALSE}
@@ -13,6 +13,8 @@ library(tm)
 library(qdap)
 library(wordcloud)
 library(ggdendro)
+library(RColorBrewer)
+library(gridExtra)
 
 qdap_clean <- function(x) {
   x <- replace_abbreviation(x)
@@ -23,7 +25,11 @@ qdap_clean <- function(x) {
   return(x)
 }
 
+color_palette <-  brewer.pal(12, 'Paired')
 reviews <- fread("ScoredReviews.csv", header = TRUE, stringsAsFactors = FALSE)
+variables <- colnames(reviews)
+variables[2] <- "V2"
+names(reviews) <- variables
 
 reviews_with_sentiment <- reviews %>% select(anger, anticipation, disgust, fear,
                                              joy, sadness, surprise, trust,
@@ -34,7 +40,8 @@ means <- ddply(melted, c("is_helpful", "variable"), summarise, mean=mean(value))
 
 ```{r echo=FALSE}
 ggplot(data = means, aes(x = factor(is_helpful), y = mean)) +
-  geom_bar(stat = "identity", position = "dodge", aes(fill = variable))
+  geom_bar(stat = "identity", position = "dodge", aes(fill = variable)) +
+  scale_fill_manual(values = color_palette)
 ```
 
 ```{r echo=FALSE, message=FALSE, results="hide"}
@@ -78,7 +85,7 @@ ggdendrogram(unhelpful_fit, rotate = TRUE) +
 
 ```{r echo=FALSE, message=FALSE, results="hide"}
 # Remove words
-my_stopwords <- c(stopwords('english'), 'amazon', 'like', 'coffee', 'taste')
+my_stopwords <- c(stopwords('english'), 'amazon', 'like', 'coffee', 'taste', 'food', 'will', 'flavor', 'product', 'one', 'can', 'just', 'good', 'really', 'tea', 'much', 'love', 'also', 'great', 'tried', 'get', 'use', 'time', 'even', 'try', 'now', 'make', 'little', 'buy', 'better', 'well', 'way', 'water', 'cup', 'price', 'made', 'found', 'find', 'first', 'eat', 'dog', 'chocolate', 'box', 'bought', 'bag', 'tastes', 'best', 'used', 'two', 'think', 'thought', 'sweet', 'sugar', 'still', 'know', 'drink', 'dot')
 helpful.corpus <- tm_map(helpful.corpus, removeWords, my_stopwords)
 unhelpful.corpus <- tm_map(unhelpful.corpus, removeWords, my_stopwords)
 
@@ -98,21 +105,63 @@ unhelpful_frequency <- rowSums(unhelpful_matrix)
 
 ```{r echo=FALSE}
 # Plot wordcloud
+
+layout(matrix(c(1, 2), nrow=2), heights=c(1, 20))
+par(mar=rep(0, 4))
+plot.new()
+text(x=0.5, y=0.5, "Helpful Reviews")
 wordcloud(names(helpful_frequency),
           helpful_frequency,
           max.words = 25,
-          color = "blue")
+          colors=color_palette)
 
+layout(matrix(c(1, 2), nrow=2), heights=c(1, 20))
+par(mar=rep(0, 4))
+plot.new()
+text(x=0.5, y=0.5, "Unhelpful Reviews")
 wordcloud(names(unhelpful_frequency),
           unhelpful_frequency,
           max.words = 25,
-        color = "blue")
+          colors=color_palette)
 ```
+
+```{r}
+helpful_df <- data.frame(word = names(helpful_frequency),
+                         count = helpful_frequency) %>%
+  arrange(desc(count)) %>%
+  top_n(20)
+unhelpful_df <- data.frame(word = names(unhelpful_frequency),
+                           count = unhelpful_frequency) %>%
+  arrange(desc(count)) %>%
+  top_n(20)
+
+helpful_word_plot <- ggplot(helpful_df,
+                            aes(x = word, y = count)) +
+  geom_bar(aes(alpha = count),
+           stat="identity",
+           fill = color_palette[[1]]) +
+  coord_flip() +
+  labs(x = NULL, y = "count", title = "Helpful") +
+  scale_alpha_continuous(range = c(0.6, 1), guide = FALSE)
+
+unhelpful_word_plot <- ggplot(unhelpful_df,
+                              aes(x = word, y = count)) +
+  geom_bar(aes(alpha = count),
+           stat="identity",
+           fill = color_palette[[2]]) +
+  coord_flip() +
+  labs(x = NULL, y = "count", title = "Unhelpful") +
+  scale_alpha_continuous(range = c(0.6, 1), guide = FALSE)
+
+grid.arrange(helpful_word_plot, unhelpful_word_plot, ncol = 2)
+```
+
 
 ```{r echo=FALSE}
 ggplot(reviews,
        aes(as.factor(review_category),
            fill = as.factor(helpful_category))) +
-  geom_bar(position = "dodge")
+  geom_bar(position = "dodge") +
+  scale_fill_manual(values = color_palette)
 ```
 

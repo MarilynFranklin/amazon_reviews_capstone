@@ -89,6 +89,10 @@ my_stopwords <- c(stopwords('english'), 'amazon', 'like', 'coffee', 'taste', 'fo
 helpful.corpus <- tm_map(helpful.corpus, removeWords, my_stopwords)
 unhelpful.corpus <- tm_map(unhelpful.corpus, removeWords, my_stopwords)
 
+# Stem words
+helpful.corpus <- tm_map(helpful.corpus, stemDocument)
+unhelpful.corpus <- tm_map(unhelpful.corpus, stemDocument)
+
 # Create TDM
 helpful.dtm <- TermDocumentMatrix(helpful.corpus)
 unhelpful.dtm <- TermDocumentMatrix(unhelpful.corpus)
@@ -156,12 +160,53 @@ unhelpful_word_plot <- ggplot(unhelpful_df,
 grid.arrange(helpful_word_plot, unhelpful_word_plot, ncol = 2)
 ```
 
+```{r}
+ggplot(reviews %>% filter(word_count < 1000),
+       aes(word_count, fill = as.factor(helpful_category))) +
+  geom_bar(position = "dodge")
+```
+
 
 ```{r echo=FALSE}
 ggplot(reviews,
        aes(as.factor(review_category),
            fill = as.factor(helpful_category))) +
-  geom_bar(position = "dodge") +
-  scale_fill_manual(values = color_palette)
+  geom_bar(position = "dodge")
+
+ggplot(reviews,
+       aes(as.factor(Score),
+           fill = as.factor(helpful_category))) +
+  geom_bar(position = "dodge")
 ```
 
+```{r}
+ggplot(reviews,
+    aes(x = helpful_category,
+        y = afinn_sentiment_mean,
+        fill = helpful_category)) +
+    geom_boxplot() +
+    labs(x = "Helpfulness",
+         y = "Afinn Sentiment Mean",
+         title = "Distribution of Helpfulness Afinn Sentiment") +
+    scale_fill_manual(values = color_palette)
+
+ggplot(reviews,
+    aes(x = helpful_category,
+        y = bing_sentiment_mean,
+        fill = helpful_category)) +
+    geom_boxplot() +
+    labs(x = "Helpfulness",
+         y = "Bing Sentiment Mean",
+         title = "Distribution of Helpfulness Bing Sentiment") +
+    scale_fill_manual(values = color_palette)
+
+ggplot(reviews,
+    aes(x = helpful_category,
+        y = sentiment_mean,
+        fill = helpful_category)) +
+    geom_boxplot() +
+    labs(x = "Helpfulness",
+         y = "Syuzhet Sentiment Mean",
+         title = "Distribution of Helpfulness Syuzhet Sentiment") +
+    scale_fill_manual(values = color_palette)
+```

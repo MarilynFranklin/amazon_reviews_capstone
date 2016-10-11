@@ -1,0 +1,111 @@
+---
+title: 'Predict'
+output: pdf_document
+---
+
+```{r setup, echo=FALSE, message=FALSE}
+library(data.table)
+library(dplyr)
+library(caret)
+library(RTextTools)
+library(xgboost)
+library(ROCR)
+
+reviews <- fread("ScoredReviews.csv", header = TRUE, stringsAsFactors = FALSE)
+variables <- colnames(reviews)
+variables[2] <- "V2"
+names(reviews) <- variables
+```
+
+### Create training and test sets
+
+```{r}
+trainIdx <- createDataPartition(reviews$is_helpful, 
+                                p = .50, 
+                                list = FALSE, 
+                                times = 1)
+train <- reviews[trainIdx, ]
+test <- reviews[-trainIdx, ]
+```
+
+### Create Document-Term Matrices (DTM)
+```{r}
+sparsity <- .99
+unhelpful.dtm <- create_matrix(train$Text[train$is_helpful == 0], 
+                         language = "english", 
+                         removeStopwords = TRUE, 
+                         removeNumbers = TRUE, 
+                         stemWords = TRUE, 
+                         removeSparseTerms = sparsity) 
+
+unhelpful.dtm.df <- as.data.frame(as.matrix(unhelpful.dtm), 
+                            row.names = train$Id[train$is_helpful == 0])
+
+
+helpful.dtm <- create_matrix(train$Text[train$is_helpful == 1], 
+                          language = "english",
+                          removeStopwords = TRUE, 
+                          removeNumbers = TRUE, 
+                          stemWords = TRUE, 
+                          removeSparseTerms = sparsity) 
+
+helpful.dtm.df <- data.table(as.matrix(helpful.dtm), 
+                          row.names = train$Id[train$is_helpful == 1])
+
+train.dtm.df <- bind_rows(unhelpful.dtm.df, helpful.dtm.df)
+train.dtm.df$Id <- c(train$Id[train$is_helpful == 0],
+                            train$Id[train$is_helpful == 1])
+train.dtm.df <- arrange(train.dtm.df, Id)
+train.dtm.df$is_helfpul <- train$is_helpful
+
+
+train.dtm.df <- train %>%
+  select(-c(V1, V2, ProductId, UserId, ProfileName, HelpfulnessDenominator, HelpfulnessNumerator, Summary, is_unhelpful, is_low_review, is_high_review, is_neutral_review, person, language, Text, Time, review_category, helpful_category, Automated_Readability_Index, unhelpful_count, helpfulness_ratio, sentiment_score, sentiment_mean, sentiment_median, bing_sentiment_score, bing_sentiment_mean, bing_sentiment_median, afinn_sentiment_score, afinn_sentiment_mean, review_length)) %>%
+  inner_join(train.dtm.df, by = "Id") %>%
+  select(-Id)
+
+train.dtm.df[is.na(train.dtm.df)] <- 0
+
+test.dtm <- create_matrix(test$Text, 
+                          language = "english", 
+                          removeStopwords = FALSE, 
+                          removeNumbers = TRUE, 
+                          stemWords = FALSE, 
+                          removeSparseTerms = sparsity) 
+test.dtm.df <- data.table(as.matrix(test.dtm))
+test.dtm.df$Id <- test$Id
+test.dtm.df$is_helpful <- test$is_helpful
+
+test.dtm.df <- test %>%
+  select(-c(V1, V2, ProductId, UserId, ProfileName, HelpfulnessDenominator, HelpfulnessNumerator, Summary, is_unhelpful, is_low_review, is_high_review, is_neutral_review, person, language, Text, Time, review_category, helpful_category, Automated_Readability_Index, unhelpful_count, helpfulness_ratio, sentiment_score, sentiment_mean, sentiment_median, bing_sentiment_score, bing_sentiment_mean, bing_sentiment_median, afinn_sentiment_score, afinn_sentiment_mean, review_length)) %>%
+  inner_join(test.dtm.df, by = "Id") %>%
+  select(-Id)
+
+test.dtm.df <- head(bind_rows(test.dtm.df, train.dtm.df[1, ]), -1)
+test.dtm.df <- test.dtm.df %>% 
+  select(one_of(colnames(train.dtm.df)))
+test.dtm.df[is.na(test.dtm.df)] <- 0
+
+baseline.acc <- sum(test$is_helpful == "1") / nrow(test)
+
+XGB.train <- as.matrix(select(train.dtm.df, -is_helpful),
+                       dimnames = dimnames(train.dtm.df))
+XGB.test <- as.matrix(select(test.dtm.df, -is_helpful),
+                      dimnames=dimnames(test.dtm.df))
+XGB.model <- xgboost(data = XGB.train, 
+                     label = train.dtm.df$is_helpful,
+                     nrounds = 400, 
+                     objective = "binary:logistic")
+
+XGB.predict <- predict(XGB.model, XGB.test)
+
+XGB.results <- data.frame(is_helpful = test$is_helpful,
+                          pred = XGB.predict)
+
+ROCR.pred <- prediction(XGB.results$pred, XGB.results$is_helpful)
+ROCR.perf <- performance(ROCR.pred, 'tnr','fnr') 
+plot(ROCR.perf, colorize = TRUE)
+```
+
+
+

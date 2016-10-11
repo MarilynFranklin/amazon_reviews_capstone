@@ -49,6 +49,11 @@ reviews <- reviews %>%
 reviews <- reviews %>%
   mutate(review_category = sapply(Score, categorize_review))
 
+# Add word count
+reviews <- reviews %>%
+  mutate(word_count = sapply(gregexpr("[[:alpha:]]+", Text),
+                             function(x) sum(x > 0)))
+
 # Add Automated readability index
 # https://en.wikipedia.org/wiki/Automated_readability_index
 
@@ -68,7 +73,6 @@ reviews <- left_join(reviews, readability, by = "person")
 with_sentences <- lapply(reviews$Text, get_sentences)
 
 # Calculate syuzhet sentiment
-with_sentences <- lapply(reviews$Text, get_sentences)
 with_sentiment <- lapply(with_sentences, get_sentiment, method="syuzhet")
 sum_sentiment <- lapply(with_sentiment, function(x) sum(x))
 mean_sentiment <- lapply(with_sentiment, function(x) mean(x))
@@ -77,8 +81,25 @@ reviews$sentiment_score <- unlist(sum_sentiment)
 reviews$sentiment_mean <- unlist(mean_sentiment)
 reviews$sentiment_median <- unlist(median_sentiment)
 
+# Calculate bing sentiment
+bing_sentiment <- lapply(with_sentences, get_sentiment, method="bing")
+sum_sentiment <- lapply(bing_sentiment, function(x) sum(x))
+mean_sentiment <- lapply(bing_sentiment, function(x) mean(x))
+median_sentiment <- lapply(bing_sentiment, function(x) median(x))
+reviews$bing_sentiment_score <- unlist(sum_sentiment)
+reviews$bing_sentiment_mean <- unlist(mean_sentiment)
+reviews$bing_sentiment_median <- unlist(median_sentiment)
+
+# Calculate afinn sentiment
+afinn_sentiment <- lapply(with_sentences, get_sentiment, method="afinn")
+sum_sentiment <- lapply(afinn_sentiment, function(x) sum(x))
+mean_sentiment <- lapply(afinn_sentiment, function(x) mean(x))
+median_sentiment <- lapply(afinn_sentiment, function(x) median(x))
+reviews$afinn_sentiment_score <- unlist(sum_sentiment)
+reviews$afinn_sentiment_mean <- unlist(mean_sentiment)
+reviews$afinn_sentiment_median <- unlist(median_sentiment)
+
 # Calculate NRC sentiment
-with_sentences <- lapply(reviews$Text, get_sentences)
 with_nrc_sentiment <- lapply(with_sentences, get_nrc_sentiment)
 sums <- lapply(with_nrc_sentiment, colSums)
 sums_list_df <- lapply(sums, data.frame)

@@ -77,12 +77,9 @@ unhelpful_fit <- hclust(unhelpful_d, method="ward.D")
 ```
 
 ```{r echo=FALSE}
+ggdendrogram(helpful_fit, rotate = TRUE) +
+  labs(title = "Unhelpful Reviews")
 
-hfd <- dendro_data(as.dendrogram(helpful_fit))
-
-p1 <- ggplot(data = hfd$segments) +
-    geom_segment(aes(x=x, y=y, xend=xend, yend=yend))
-p1+scale_x_discrete(labels=hfd$labels$label)
 
 ggdendrogram(unhelpful_fit, rotate = TRUE) +
   labs(title = "Unhelpful Reviews")

@@ -1,6 +1,8 @@
 ---
 title: "Visualize"
-output: pdf_document
+output: 
+  md_document:
+    variant: markdown_github
 ---
 
 ```{r echo=FALSE, message=FALSE}

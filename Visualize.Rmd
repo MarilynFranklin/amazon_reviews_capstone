@@ -1,6 +1,8 @@
 ---
 title: "Visualize"
-output: pdf_document
+output: 
+  md_document:
+    variant: markdown_github
 ---
 
 ```{r echo=FALSE, message=FALSE}
@@ -15,6 +17,7 @@ library(wordcloud)
 library(ggdendro)
 library(RColorBrewer)
 library(gridExtra)
+library(slam)
 
 qdap_clean <- function(x) {
   x <- replace_abbreviation(x)
@@ -77,7 +80,8 @@ unhelpful_fit <- hclust(unhelpful_d, method="ward.D")
 
 ```{r echo=FALSE}
 ggdendrogram(helpful_fit, rotate = TRUE) +
-  labs(title = "Helpful Reviews")
+  labs(title = "Unhelpful Reviews")
+
 
 ggdendrogram(unhelpful_fit, rotate = TRUE) +
   labs(title = "Unhelpful Reviews")
@@ -96,14 +100,18 @@ unhelpful.corpus <- tm_map(unhelpful.corpus, stemDocument)
 # Create TDM
 helpful.dtm <- TermDocumentMatrix(helpful.corpus)
 unhelpful.dtm <- TermDocumentMatrix(unhelpful.corpus)
+```
 
+For getting row sums, I am using the `slam` package as it is a much more memory efficient way to do this.
+
+```{r}
 # Create matrix
-helpful_matrix   <- as.matrix(helpful.dtm)
-unhelpful_matrix <- as.matrix(unhelpful.dtm)
+# helpful_matrix   <- as.matrix(helpful.dtm)
+# unhelpful_matrix <- as.matrix(unhelpful.dtm)
 
 # Calculate frequency
-helpful_frequency   <- rowSums(helpful_matrix)
-unhelpful_frequency <- rowSums(unhelpful_matrix)
+helpful_frequency   <- slam::row_sums(helpful.dtm, na.rm=T)
+unhelpful_frequency <- slam::row_sums(unhelpful.dtm, na.rm=T)
 ```
 
 
@@ -129,6 +137,9 @@ wordcloud(names(unhelpful_frequency),
           colors=color_palette)
 ```
 
+
+In order to arrange the bar plots, I have used the `reorder()` function within the x aesthetics. Seems to be working.
+
 ```{r}
 helpful_df <- data.frame(word = names(helpful_frequency),
                          count = helpful_frequency) %>%
@@ -140,7 +151,7 @@ unhelpful_df <- data.frame(word = names(unhelpful_frequency),
   top_n(20)
 
 helpful_word_plot <- ggplot(helpful_df,
-                            aes(x = word, y = count)) +
+                            aes(x = reorder(word, count), y = count)) +
   geom_bar(aes(alpha = count),
            stat="identity",
            fill = color_palette[[1]]) +
@@ -149,7 +160,7 @@ helpful_word_plot <- ggplot(helpful_df,
   scale_alpha_continuous(range = c(0.6, 1), guide = FALSE)
 
 unhelpful_word_plot <- ggplot(unhelpful_df,
-                              aes(x = word, y = count)) +
+                              aes(x = reorder(word, count), y = count)) +
   geom_bar(aes(alpha = count),
            stat="identity",
            fill = color_palette[[2]]) +

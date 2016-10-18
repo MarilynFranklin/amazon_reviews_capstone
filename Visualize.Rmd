@@ -177,6 +177,12 @@ ggplot(reviews %>% filter(word_count < 1000),
   geom_bar(position = "dodge")
 ```
 
+```{r}
+ggplot(reviews,
+        aes(x = product_review_count, fill = helpful_category)) +
+  geom_density(alpha = 0.2) +
+  labs(x = 'Product Review Count')
+```
 
 ```{r echo=FALSE}
 ggplot(reviews,

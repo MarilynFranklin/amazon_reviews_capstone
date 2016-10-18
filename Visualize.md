@@ -14,6 +14,9 @@ helpful_frequency   <- slam::row_sums(helpful.dtm, na.rm=T)
 unhelpful_frequency <- slam::row_sums(unhelpful.dtm, na.rm=T)
 ```
 
+    ## Warning in wordcloud(names(helpful_frequency), helpful_frequency, max.words
+    ## = 25, : recommend could not be fit on page. It will not be plotted.
+
 ![](Visualize_files/figure-markdown_github/unnamed-chunk-7-1.png)![](Visualize_files/figure-markdown_github/unnamed-chunk-7-2.png)
 
 In order to arrange the bar plots, I have used the `reorder()` function within the x aesthetics. Seems to be working.
@@ -68,7 +71,16 @@ ggplot(reviews %>% filter(word_count < 1000),
 
 ![](Visualize_files/figure-markdown_github/unnamed-chunk-9-1.png)
 
-![](Visualize_files/figure-markdown_github/unnamed-chunk-10-1.png)![](Visualize_files/figure-markdown_github/unnamed-chunk-10-2.png)
+``` r
+ggplot(reviews,
+        aes(x = product_review_count, fill = helpful_category)) +
+  geom_density(alpha = 0.2) +
+  labs(x = 'Product Review Count')
+```
+
+![](Visualize_files/figure-markdown_github/unnamed-chunk-10-1.png)
+
+![](Visualize_files/figure-markdown_github/unnamed-chunk-11-1.png)![](Visualize_files/figure-markdown_github/unnamed-chunk-11-2.png)
 
 ``` r
 ggplot(reviews,
@@ -82,7 +94,7 @@ ggplot(reviews,
     scale_fill_manual(values = color_palette)
 ```
 
-![](Visualize_files/figure-markdown_github/unnamed-chunk-11-1.png)
+![](Visualize_files/figure-markdown_github/unnamed-chunk-12-1.png)
 
 ``` r
 ggplot(reviews,
@@ -96,7 +108,7 @@ ggplot(reviews,
     scale_fill_manual(values = color_palette)
 ```
 
-![](Visualize_files/figure-markdown_github/unnamed-chunk-11-2.png)
+![](Visualize_files/figure-markdown_github/unnamed-chunk-12-2.png)
 
 ``` r
 ggplot(reviews,
@@ -110,4 +122,4 @@ ggplot(reviews,
     scale_fill_manual(values = color_palette)
 ```
 
-![](Visualize_files/figure-markdown_github/unnamed-chunk-11-3.png)
+![](Visualize_files/figure-markdown_github/unnamed-chunk-12-3.png)

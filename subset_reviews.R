@@ -5,6 +5,12 @@ library(textcat)
 reviews <- fread("Reviews.csv", header = TRUE, stringsAsFactors = FALSE)
 reviews <- data.frame(reviews)
 
+# Add product_review_count
+reviews <- reviews %>%
+  group_by(ProductId) %>%
+  mutate(product_review_count = n()) %>%
+  ungroup()
+
 # Remove unrated reviews
 reviews <- reviews %>% filter(HelpfulnessDenominator > 0)
 

@@ -80,7 +80,7 @@ unhelpful_fit <- hclust(unhelpful_d, method="ward.D")
 
 ```{r echo=FALSE}
 ggdendrogram(helpful_fit, rotate = TRUE) +
-  labs(title = "Unhelpful Reviews")
+  labs(title = "Helpful Reviews")
 
 
 ggdendrogram(unhelpful_fit, rotate = TRUE) +
